@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var message: String?
     @State private var error: String?
     @State private var removing: Vehicle?
+    @State private var cameraVehicle: Vehicle?
     @FocusState private var inputFocused: Bool
     private let green = Color(red: 0.13, green: 0.29, blue: 0.24)
 
@@ -69,6 +70,12 @@ struct ContentView: View {
                             if let date = vehicle.confirmedAt { Text("Confirmed \(date.formatted(date: .abbreviated, time: .omitted))").font(.caption) }
                             Button("Remove vehicle", role: .destructive) { removing = vehicle }
                         }
+                        Button {
+                            cameraVehicle = vehicle
+                        } label: {
+                            Label("Open camera · \(vehicle.title)", systemImage: "camera")
+                        }
+                        .accessibilityIdentifier("garageCameraButton")
                     }
                 }
                 Section {
@@ -79,6 +86,9 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("MCmech").tint(green)
+            .fullScreenCover(item: $cameraVehicle) { vehicle in
+                VehicleCameraView(vehicleTitle: vehicle.title)
+            }
             .onChange(of: vin) { preview = nil; error = nil; message = nil }
             .onChange(of: year) { preview = nil; error = nil; message = nil }
             .alert("Remove saved vehicle?", isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
