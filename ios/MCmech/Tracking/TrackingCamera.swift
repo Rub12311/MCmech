@@ -9,7 +9,13 @@
 // Serialize Vision work off the main thread; keep the UI responsive.
 // During normal tracking, bound pending work and avoid building a stale queue.
 // Long time gaps require reacquisition rather than silently retaining the lock.
-// Bound retained selection frames by time and memory; release on stop or reset.
+// Retain only bounded working frames; release on stop or reset. Do not buffer
+// the entire selection interaction. Avoid retaining capture-owned buffers long
+// enough to exhaust the capture pool. Copy only when a bounded use requires it.
+// Discard late capture frames and keep at most one pending latest frame in the
+// application worker as well; capture-level dropping does not bound a separate
+// async task queue. Record timestamp gaps and dropped-frame reasons.
+// Source: https://developer.apple.com/library/archive/technotes/tn2445/_index.html
 // Measure processing time and thermal behavior on the actual target iPhone.
 //
 // Centralize conversions between view coordinates and Vision's normalized image
@@ -21,3 +27,6 @@
 // Publish timestamped observations to the overlay. Reject results from an old
 // selection or camera session. On rotation or camera configuration changes,
 // explicitly recompute transforms and reset tracking when continuity is invalid.
+// Start with one rear physical camera and no zoom controls. Avoid automatic lens
+// switching during a track. Handle focus hunting and exposure changes as possible
+// causes of poor observations, especially close to small shiny engine components.
